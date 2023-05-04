@@ -45,6 +45,11 @@ function preload(){
 function setup() {
   createCanvas(windowWidth, windowHeight);
   
+  var canvasX = (windowWidth - 600) / 2;
+  var canvasY = (windowHeight - 200) / 2;
+  canvas.position(canvasX, canvasY);
+  resizeCanvas(600, 200);
+  
   trex = createSprite(50,180,20,50);
   trex.addAnimation("running", trex_running);
   trex.addAnimation("collided", trex_collided);
