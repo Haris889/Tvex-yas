@@ -10,17 +10,14 @@ var cloudsGroup, cloudImage;
 //var bqqsGroup, obstacle2;
 var obstaclesGroup, obstacle1, obstacle2, obstacle3, obstacle4, obstacle5, obstacle6;
 
-/*var groundSpeed = 200; // Set the speed of the ground in pixels per second
-var lastTime = 0; // Keep track of the last time update*/
-
 var jumpSound;
 var scoreGain;
 var gameOverSound;
 var score=0;
-
+//var lastJump = 0;
+//var currentTime;
+var canJump = true;
 var gameOver, restart;
-
-
 
 function preload(){
   trex_running =   loadAnimation("trex1.png","trex3.png","trex4.png");
@@ -49,46 +46,20 @@ function setup() {
   createCanvas(windowWidth, windowHeight);
   
   trex = createSprite(50,180,20,50);
-  
   trex.addAnimation("running", trex_running);
   trex.addAnimation("collided", trex_collided);
   trex.scale = 0.5;
-  
-  /*brownGroundImage = createImage(groundImage.width, groundImage.height);
-  brownGroundImage.loadPixels();
-  for (var x = 0; x < brownGroundImage.width; x++) {
-    for (var y = 0; y < brownGroundImage.height; y++) {
-      if (x < 20) { // Change the width of the brown color as per your requirement
-        brownGroundImage.set(x, y, color(165, 42, 42)); // Set the color to brown
-      } else {
-        var index = (x + y * brownGroundImage.width) * 4;
-        brownGroundImage.pixels[index] = groundImage.pixels[index];
-        brownGroundImage.pixels[index + 1] = groundImage.pixels[index + 1];
-        brownGroundImage.pixels[index + 2] = groundImage.pixels[index + 2];
-        brownGroundImage.pixels[index + 3] = groundImage.pixels[index + 3];
-      }
-    }
-  }
-  brownGroundImage.updatePixels();*/
+
 
   ground = createSprite(200,175,400,20);
   ground.addImage("ground",groundImage);
   ground.x = ground.width /2;
   ground.velocityX =  -(6 + 3*score/100); //-(groundSpeed/60*frameRate());     
   ground.depth = trex.depth - 10;
- 
-
-  /*ground1 = createSprite(200, 180, 400, 20);
- ground1.shapeColor = color(165, 42, 42);
- ground1.x = ground.width / 2;
-ground1.velocityX = -(6 + 3*score/100);*/
-
-
 
   gameOver = createSprite(300,100);
   gameOver.addImage(gameOverImg);
-  //gameOver.depth = cloud.depth + 10;
-  
+ 
   restart = createSprite(300,140);
   restart.addImage(restartImg);
   
@@ -103,7 +74,6 @@ ground1.velocityX = -(6 + 3*score/100);*/
   
   cloudsGroup = new Group();
   obstaclesGroup = new Group();
-  //bqqsGroup = new Group();
 
   trex.setCollider("rectangle",0,0,trex.width,trex.height);
   trex.debug = true
@@ -111,26 +81,9 @@ ground1.velocityX = -(6 + 3*score/100);*/
   score = 0;
 }
 
-function draw() {
-  //trex.debug = true;
-  /*var now = millis();
-  var elapsed = (now - lastTime) / 1000; // Convert milliseconds to seconds
-  lastTime = now;
-
-  // Calculate the distance to move the T-Rex and the ground based on the elapsed time and the groundSpeed variable
-  var distance = elapsed * groundSpeed;
-
-  // Move the T-Rex and the ground based on the distance variable
-  trex.position.x += distance;
-  ground.position.x += distance;
-
-  // Reset the position of the ground if it goes offscreen
-  if (ground.position.x < -ground.width/2) {
-    ground.position.x += ground.width;
-  }*/
+function draw() {//*
  
   background(135,206,235);
-  
 
   fill("blue");
   textFont("Brush Script MT")
@@ -141,18 +94,28 @@ function draw() {
   textFont("Brush Script MT")*/
   
   if (gameState===PLAY){
-    score = score + Math.round(frameRate() / 60);//getFrameRate()/60);
+    if (frameCount % 6 === 0) {
+      score++;
+    }
+    //score = score +   // Math.round(frameRate() / 60);//getFrameRate()/60);
     //ground.velocityX = -(5 + 4*score/100);
-    ground.velocityX = -8;
+    ground.velocityX = -(6 + 3 * score / 100); //-8;
     if (ground.x < 0){
       ground.x = ground.width/2;
     }
 
-    if(mouseIsPressed && trex.y >=159) {
+    if (trex.collide(invisibleGround)) {
+      canJump = true; // Reset canJump when the trex lands on the ground
+    }
+  
+    if(touches.length > 0 || keyDown("UP_ARROW") && canJump){//trex.y >=159) {
+      if (canJump) {
       trex.velocityY = -20;
       jumpSound.play();
+      canJump = false;
     }
-    trex.velocityY = trex.velocityY + 1.47;
+  }
+    trex.velocityY = trex.velocityY + 1.5;
 
        if (keyDown("DOWN_ARROW")) {
          trex.scale = 0.3;
@@ -161,7 +124,7 @@ function draw() {
        }
       
     
-      // trex.velocityY = trex.velocityY - 0.8
+      // trex.velocityY = trex.velocityY + 0.8
   
     if (ground.x < 0){
       ground.x = ground.width/2;
@@ -175,17 +138,12 @@ function draw() {
     trex.collide(invisibleGround);
     spawnClouds();
     spawnObstacles();
-    //spawnQqqs();
-    
-   /* if (score > 0 && score % 100 === 0){
-      //checkPointSound.play();
-      groundSpeed += 50; // Increase the speed of the ground every 100 points
-      ground.velocityX = -(groundSpeed/60*frameRate()); // Update the velocity of the ground
-    }*/
+    //spwanQQs()
   
     if(obstaclesGroup.isTouching(trex)){
         gameState = END;
         gameOverSound.play();
+        //trex.velocityY = 0;
     }
   }
   else if (gameState === END) {
@@ -206,19 +164,26 @@ function draw() {
     obstaclesGroup.setLifetimeEach(-1);
     cloudsGroup.setLifetimeEach(-1);
    // bqqsGroup.setLifetimeEach(-1);
+  
+   if (touches.length > 0 || mousePressedOver(restart)) {
+    reset();
+    touches = [];
     
-    if(mousePressedOver(restart)) {
+   /*if(mousePressedOver(restart)) {
       reset();
-    }
+      
+   // }*/
+    //touches = [];
+  
   }
-  
-  
+}
   drawSprites();
+
 }
 
 function spawnClouds() {
   //write code here to spawn the clouds
-  if (frameCount % 60 === 0) {
+  if (frameCount % 40 === 0) {
     var cloud = createSprite(600,120,40,10);
     cloud.y = Math.round(random(70,100));
     cloud.addImage(cloudImage);
@@ -237,41 +202,10 @@ function spawnClouds() {
   }
 }
 
- /* function spawnQqqs() {
-    if (frameCount % 90 === 0) {
-      var Qqq = createSprite(600,165,10,40);
-     /* Qqq.y = Math.round(random(1,5));
-      Qqq.addImage(obstacle2);*/
-      var randw = Math.round(random(1,8));
- /*   switch(randw) {
-      case 1: Qqq.addImage(obstacle2);
-              break;
-      default: break;
-   }
-     
-      Qqq.scale = 0.2;
-      Qqq.velocityX = -(6 + 3*score/98);
-      
-       //assign lifetime to the variable
-      Qqq.lifetime = 200;
-
-      bqqsGroup.add(Qqq);
-      
-    
-
-
-
-
-
-
-
-  }
-  
-  } */
 
 function spawnObstacles() {
   if(frameCount % 55 === 0) {
-    var obstacle = createSprite(600,165,10,40);
+    var obstacle = createSprite(600,155,10,40);
     //obstacle.debug = true;
     obstacle.velocityX = -(6 + 3*score/100);
     
@@ -279,24 +213,24 @@ function spawnObstacles() {
     var rand = Math.round(random(1,5));
     switch(rand) {
       case 1: obstacle.addImage(obstacle1);
-              obstacle.scale = 0.28;
+              obstacle.scale = 0.23;
               break;
       case 2: obstacle.addImage(obstacle2);
-              obstacle.scale = 0.25;
+              obstacle.scale = 0.24;
               break;
       case 3: obstacle.addImage(obstacle3);
-             obstacle.scale = 0.27;
+             obstacle.scale = 0.24;
               break;
       case 4: obstacle.addImage(obstacle4);
-              obstacle.scale = 0.135;
+              obstacle.scale = 0.125;
               obstacle.depth = trex.depth - 10;
               break;
       case 5: obstacle.addImage(obstacle5);
-              obstacle.scale = 0.135;
+              obstacle.scale = 0.125;
               obstacle.depth = trex.depth - 10;
               break;
       case 6: obstacle.addImage(obstacle6);
-              obstacle.scale = 0.130;
+              obstacle.scale = 0.125;
               obstacle.depth = trex.depth - 10;
               break;
       default: break;
@@ -333,3 +267,4 @@ function reset(){
   //ground.velocityX = -(groundSpeed/60*frameRate()); */ //Reset the velocity of the// ground
 
 }
+
