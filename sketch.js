@@ -148,7 +148,7 @@ function draw() {
       ground.x = ground.width/2;
     }
 
-    if(keyDown("UP_ARROW") && trex.y >=159) {
+    if(mouseIsPressed && trex.y >=159) {
       trex.velocityY = -20;
       jumpSound.play();
     }
